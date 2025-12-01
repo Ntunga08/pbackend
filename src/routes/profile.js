@@ -1,5 +1,5 @@
-import  express from 'express';
-import  {
+import express from 'express';
+import {
     getProfile,
     createProfile,
     updateProfile
@@ -7,13 +7,9 @@ import  {
 
 const router = express.Router();
 
-// Route to get the profile
+// Profile routes - explicit path
 router.get('/profile', getProfile);
-
-// Route to create the profile (only once)
 router.post('/profile', createProfile);
-
-// Route to update the profile
 router.put('/profile', updateProfile);
 
 export default router;      
