@@ -1,4 +1,4 @@
-import Experience from "../models/experience";
+import Experience from "../models/experience.js";
 import Profile from "../models/profile.js";
 
 
@@ -70,7 +70,7 @@ export const updateExperience = async (req, res) => {
         const {id} = req.params;
 
         let experience = await Experience.findById(id);
-        if(!eperience){
+        if(!experience){
             return res.status(404).json({
                 success: false,
                 error: 'Experience entry not found'
@@ -110,7 +110,7 @@ export const updateExperience = async (req, res) => {
                 });
                 
             }
-            await experience.remove();
+            await Experience.findByIdAndDelete(id);
 
             res.status(200).json({
                 success: true,
@@ -126,6 +126,57 @@ export const updateExperience = async (req, res) => {
 
     };
 
+export const deleteExperienceById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const experience = await Experience.findByIdAndDelete(id);
+
+        if (!experience) {
+            return res.status(404).json({
+                success: false,
+                error: 'Experience entry not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Experience entry deleted successfully',
+            data: experience
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+export const getExperienceById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const experience = await Experience.findById(id)
+            .populate('profile', 'firstname lastname email');
+
+        if (!experience) {
+            return res.status(404).json({
+                success: false,
+                error: 'Experience entry not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: experience
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
 
 
 

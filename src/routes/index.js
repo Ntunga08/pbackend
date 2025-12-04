@@ -3,6 +3,7 @@ import profileRoutes from './profile.js';
 import skillRoutes from './skills.js';
 import testimonialRoutes from './testimonials.js';
 import educationRoutes from './education.js';
+import experienceRoutes from './experience.js';
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.use('/', testimonialRoutes);
 
 // Use education routes
 router.use('/', educationRoutes);
-
+// Use experience routes
+router.use('/', experienceRoutes);
 export default router;  
 
