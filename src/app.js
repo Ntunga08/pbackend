@@ -12,6 +12,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.originalUrl} - ${new Date().toLocaleString()}`);
+  next();
+});
+
 // ROUTES
 app.use('/api', routes);
 
