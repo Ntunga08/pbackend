@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const experienceSchema = new mongoose.Schema(
   {
-    title: {
+    titlhe: {
       type: String,
       required: true
     },
