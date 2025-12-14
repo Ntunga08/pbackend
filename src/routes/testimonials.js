@@ -1,19 +1,30 @@
+// routes/testimonialRouter.js
 import express from 'express';
 import {
   getAllTestimonials,
+  getAllTestimonialsAdmin,
+  getTestimonialById,
   addTestimonial,
   updateTestimonial,
   deleteTestimonial,
-  getTestmonialById
-} from '../controllers/testmonialcontroller.js';
+  permanentlyDeleteTestimonial,
+  getVerifiedTestimonials,
+  getTestimonialsByRating
+} from '../controllers/testimonialcontroller.js';
 
 const router = express.Router();
 
-// Testimonials routes - explicit path
+// Public routes
 router.get('/testimonials', getAllTestimonials);
-router.get('/testimonials/:id', getTestmonialById);
+router.get('/testimonials/verified', getVerifiedTestimonials);
+router.get('/testimonials/rating', getTestimonialsByRating);
+router.get('/testimonials/:id', getTestimonialById);
+
+// Admin routes
 router.post('/testimonials', addTestimonial);
 router.put('/testimonials/:id', updateTestimonial);
 router.delete('/testimonials/:id', deleteTestimonial);
+router.delete('/testimonials/:id/permanent', permanentlyDeleteTestimonial);
+router.get('/admin/testimonials', getAllTestimonialsAdmin);
 
 export default router;
