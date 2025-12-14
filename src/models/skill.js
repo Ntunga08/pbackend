@@ -4,17 +4,42 @@ const skillSchema = new mongoose.Schema(
   {
     name: {
       type: String,
+      required: true,
+      trim: true
+    },
+    category: {
+      type: String,
+      enum: ['backend', 'frontend', 'mobile', 'system', 'design'],
+      required: true
+    },
+    description: {
+      type: String,
       required: true
     },
     proficiency: {
-      type: String,
-      enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
-      default: 'Intermediate'
+      type: Number,
+      min: 0,
+      max: 100,
+      required: true
     },
-    yearsOfExperience: Number,
+    yearsOfExperience: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    technologies: {
+      type: [String],
+      required: true,
+      default: []
+    },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Profile'
+      ref: 'Profile',
+      required: true
+    },
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   { timestamps: true }

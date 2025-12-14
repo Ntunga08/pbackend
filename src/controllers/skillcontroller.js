@@ -13,7 +13,9 @@ export const getAllSkills = async (req, res) => {
       });
     }
     
-    const skills = await Skill.find({ profile: profile._id }).populate('profile', 'firstname lastname email');
+    const skills = await Skill.find({ profile: profile._id, isActive: true })
+      .populate('profile', 'firstname lastname email')
+      .sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
@@ -31,7 +33,7 @@ export const getAllSkills = async (req, res) => {
 // Add a new skill (to the single profile)
 export const addSkill = async (req, res) => {
   try {
-    const { name, proficiency, yearsOfExperience } = req.body;
+    const { name, category, description, proficiency, yearsOfExperience, technologies } = req.body;
     
     console.log('Adding skill - Request body:', req.body);
     
@@ -42,8 +44,43 @@ export const addSkill = async (req, res) => {
         error: 'Skill name is required and must not be empty'
       });
     }
+
+    if (!category || !['backend', 'frontend', 'mobile', 'system', 'design'].includes(category)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Valid category is required (backend, frontend, mobile, system, design)'
+      });
+    }
+
+    if (!description || description.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Description is required'
+      });
+    }
+
+    if (proficiency === undefined || proficiency < 0 || proficiency > 100) {
+      return res.status(400).json({
+        success: false,
+        error: 'Proficiency must be a number between 0 and 100'
+      });
+    }
+
+    if (yearsOfExperience === undefined || yearsOfExperience < 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Years of experience must be a non-negative number'
+      });
+    }
+
+    if (!Array.isArray(technologies) || technologies.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'At least one technology is required'
+      });
+    }
     
-    // Get the single profile - with better error handling
+    // Get the single profile
     let profile;
     try {
       profile = await Profile.findOne().select('_id firstname lastname email');
@@ -75,12 +112,15 @@ export const addSkill = async (req, res) => {
       });
     }
     
-    console.log('Creating skill with:', { name, proficiency, yearsOfExperience, profileId: profile._id });
+    console.log('Creating skill with:', { name, category, description, proficiency, yearsOfExperience, technologies, profileId: profile._id });
     
     const skill = await Skill.create({
       name: name.trim(),
-      proficiency: proficiency || 'Intermediate',
-      yearsOfExperience: yearsOfExperience || 0,
+      category,
+      description: description.trim(),
+      proficiency,
+      yearsOfExperience,
+      technologies,
       profile: profile._id
     });
     
@@ -106,7 +146,7 @@ export const addSkill = async (req, res) => {
 export const updateSkill = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, proficiency, yearsOfExperience } = req.body;
+    const { name, category, description, proficiency, yearsOfExperience, technologies, isActive } = req.body;
     
     let skill = await Skill.findById(id);
     
@@ -116,11 +156,71 @@ export const updateSkill = async (req, res) => {
         error: 'Skill not found'
       });
     }
-    
-    // Update fields if provided
-    if (name) skill.name = name;
-    if (proficiency) skill.proficiency = proficiency;
-    if (yearsOfExperience !== undefined) skill.yearsOfExperience = yearsOfExperience;
+
+    // Validate fields if provided
+    if (name !== undefined) {
+      if (name.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          error: 'Skill name cannot be empty'
+        });
+      }
+      skill.name = name.trim();
+    }
+
+    if (category !== undefined) {
+      if (!['backend', 'frontend', 'mobile', 'system', 'design'].includes(category)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Valid category is required (backend, frontend, mobile, system, design)'
+        });
+      }
+      skill.category = category;
+    }
+
+    if (description !== undefined) {
+      if (description.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          error: 'Description cannot be empty'
+        });
+      }
+      skill.description = description.trim();
+    }
+
+    if (proficiency !== undefined) {
+      if (proficiency < 0 || proficiency > 100) {
+        return res.status(400).json({
+          success: false,
+          error: 'Proficiency must be between 0 and 100'
+        });
+      }
+      skill.proficiency = proficiency;
+    }
+
+    if (yearsOfExperience !== undefined) {
+      if (yearsOfExperience < 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Years of experience cannot be negative'
+        });
+      }
+      skill.yearsOfExperience = yearsOfExperience;
+    }
+
+    if (technologies !== undefined) {
+      if (!Array.isArray(technologies) || technologies.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'At least one technology is required'
+        });
+      }
+      skill.technologies = technologies;
+    }
+
+    if (isActive !== undefined) {
+      skill.isActive = isActive;
+    }
     
     await skill.save();
     await skill.populate('profile', 'firstname lastname email');
@@ -138,8 +238,39 @@ export const updateSkill = async (req, res) => {
   }
 };
 
-// Delete a skill
+// Delete a skill (soft delete using isActive flag)
 export const deleteSkill = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const skill = await Skill.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      { new: true }
+    );
+    
+    if (!skill) {
+      return res.status(404).json({
+        success: false,
+        error: 'Skill not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Skill deleted successfully',
+      data: skill
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// Permanently delete a skill
+export const permanentlyDeleteSkill = async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -154,7 +285,7 @@ export const deleteSkill = async (req, res) => {
     
     res.status(200).json({
       success: true,
-      message: 'Skill deleted successfully',
+      message: 'Skill permanently deleted',
       data: skill
     });
   } catch (error) {
