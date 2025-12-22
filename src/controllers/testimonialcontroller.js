@@ -1,11 +1,13 @@
 import Testimonial from '../models/testimonial.js';
 import Profile from '../models/profile.js';
 
-// Get all active testimonials (for public display)
+// Get all active & verified testimonials (for public display)
 export const getAllTestimonials = async (req, res) => {
   try {
-    const testimonials = await Testimonial.find({ isActive: true })
-      .sort({ createdAt: -1 });
+    const testimonials = await Testimonial.find({ 
+      isActive: true,
+      isVerified: true 
+    }).sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
@@ -223,7 +225,7 @@ export const deleteTestimonial = async (req, res) => {
     
     const testimonial = await Testimonial.findByIdAndUpdate(
       id,
-      { isActive: false },
+      { isActive: false, isVerified: false },
       { new: true }
     );
     
@@ -274,18 +276,28 @@ export const permanentlyDeleteTestimonial = async (req, res) => {
   }
 };
 
-// Get verified testimonials only
-export const getVerifiedTestimonials = async (req, res) => {
+// Verify a testimonial (admin only)
+export const verifyTestimonial = async (req, res) => {
   try {
-    const testimonials = await Testimonial.find({ 
-      isActive: true, 
-      isVerified: true 
-    }).sort({ createdAt: -1 });
+    const { id } = req.params;
+    
+    const testimonial = await Testimonial.findByIdAndUpdate(
+      id,
+      { isVerified: true, isActive: true },
+      { new: true }
+    );
+    
+    if (!testimonial) {
+      return res.status(404).json({
+        success: false,
+        error: 'Testimonial not found'
+      });
+    }
     
     res.status(200).json({
       success: true,
-      count: testimonials.length,
-      data: testimonials
+      message: 'Testimonial verified successfully',
+      data: testimonial
     });
   } catch (error) {
     res.status(500).json({
@@ -309,6 +321,7 @@ export const getTestimonialsByRating = async (req, res) => {
 
     const testimonials = await Testimonial.find({
       isActive: true,
+      isVerified: true,
       rating: { $gte: minRating, $lte: maxRating }
     }).sort({ rating: -1, createdAt: -1 });
     
