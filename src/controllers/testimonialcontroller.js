@@ -1,13 +1,12 @@
 import Testimonial from '../models/testimonial.js';
 import Profile from '../models/profile.js';
 
-// Get all active & verified testimonials (for public display)
+// Get all active testimonials (for public display)
 export const getAllTestimonials = async (req, res) => {
   try {
-    const testimonials = await Testimonial.find({ 
-      isActive: true,
-      isVerified: true 
-    }).sort({ createdAt: -1 });
+    // Public view: only show testimonials that are active AND verified
+    const testimonials = await Testimonial.find({ isActive: true, isVerified: true })
+      .sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
@@ -225,7 +224,7 @@ export const deleteTestimonial = async (req, res) => {
     
     const testimonial = await Testimonial.findByIdAndUpdate(
       id,
-      { isActive: false, isVerified: false },
+      { isActive: false },
       { new: true }
     );
     
@@ -276,28 +275,18 @@ export const permanentlyDeleteTestimonial = async (req, res) => {
   }
 };
 
-// Verify a testimonial (admin only)
-export const verifyTestimonial = async (req, res) => {
+// Get verified testimonials only
+export const getVerifiedTestimonials = async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    const testimonial = await Testimonial.findByIdAndUpdate(
-      id,
-      { isVerified: true, isActive: true },
-      { new: true }
-    );
-    
-    if (!testimonial) {
-      return res.status(404).json({
-        success: false,
-        error: 'Testimonial not found'
-      });
-    }
+    const testimonials = await Testimonial.find({ 
+      isActive: true, 
+      isVerified: true 
+    }).sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
-      message: 'Testimonial verified successfully',
-      data: testimonial
+      count: testimonials.length,
+      data: testimonials
     });
   } catch (error) {
     res.status(500).json({
