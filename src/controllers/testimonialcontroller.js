@@ -8,6 +8,8 @@ export const getAllTestimonials = async (req, res) => {
     const testimonials = await Testimonial.find({ isActive: true, isVerified: true })
       .sort({ createdAt: -1 });
     
+    console.log(`Public testimonials endpoint: Found ${testimonials.length} verified testimonials`);
+    
     res.status(200).json({
       success: true,
       count: testimonials.length,
@@ -199,9 +201,16 @@ export const updateTestimonial = async (req, res) => {
     if (linkedIn !== undefined) testimonial.linkedIn = linkedIn ? linkedIn.trim() : null;
     if (website !== undefined) testimonial.website = website ? website.trim() : null;
     if (isActive !== undefined) testimonial.isActive = isActive;
-    if (isVerified !== undefined) testimonial.isVerified = isVerified;
+    if (isVerified !== undefined) {
+      testimonial.isVerified = isVerified;
+      // When verifying, ensure testimonial is also active
+      if (isVerified && !testimonial.isActive) {
+        testimonial.isActive = true;
+      }
+    }
     if (adminNotes !== undefined) testimonial.adminNotes = adminNotes ? adminNotes.trim() : null;
     
+    console.log(`Updating testimonial ${id}: isActive=${testimonial.isActive}, isVerified=${testimonial.isVerified}`);
     await testimonial.save();
     
     res.status(200).json({
